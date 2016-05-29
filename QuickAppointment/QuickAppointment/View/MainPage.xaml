@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<TabbedPage xmlns="http://xamarin.com/schemas/2014/forms"
+            xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+            xmlns:customcontrol="clr-namespace:QuickAppointment.CustomControl;assembly=QuickAppointment"
+            BackgroundColor="White"
+            x:Class="QuickAppointment.View.MainPage">
+  
+  <!-- ページのリソース:スタイルを定義 -->
+  <TabbedPage.Resources>
+    <ResourceDictionary>
+      <Color x:Key="AccentColor">#3498db</Color>
+      <OnPlatform x:TypeArguments="Thickness" x:Key="PagePadding" iOS="20" Android="20,0,20,0" WinPhone="20,0,20,0" />
+      <OnPlatform x:TypeArguments="x:Double" x:Key="FontSize" iOS="18" Android="20" WinPhone="20" />
+      <Style TargetType="ContentPage">
+        <Setter Property="Padding" Value="{StaticResource PagePadding}" />
+      </Style>
+      <Style TargetType="Label">
+        <Setter Property="FontSize" Value="{StaticResource FontSize}"/>
+      </Style>
+    </ResourceDictionary>
+  </TabbedPage.Resources>
+  
+  <TabbedPage.Children>
+    <!-- 次の予定タブ -->
+    <ContentPage Title="次の予定" Icon="next.png" >
+      <ScrollView>
+        <StackLayout>
+          <!-- インジケーター -->
+          <ActivityIndicator IsVisible="{Binding IsLoading}" IsRunning="{Binding IsLoading}" />
+          <!-- 予定 -->
+          <StackLayout IsVisible="{Binding IsLoaded}">
+            <StackLayout Orientation="Horizontal">
+              <Label Text="{Binding Appointment.Subject}" FontSize="24" TextColor="{StaticResource AccentColor}" />
+              <Button Text="[詳細]" BackgroundColor="White" TextColor="{StaticResource AccentColor}" Command="{Binding ShowAppointmentDetailCommand}" />
+            </StackLayout>
+            <StackLayout BindingContext="{Binding Appointment}">
+              <!-- 時間 -->
+              <customcontrol:StartEndLabel StartTime="{Binding ScheduledStart}" EndTime="{Binding ScheduledEnd}" />
+              <!-- 関連する営業案件と取引先企業 -->
+              <StackLayout Orientation="Horizontal">
+                <customcontrol:ActionLabel Text="{Binding Account.AccountName}" Data="{Binding Account.AccountId}" Icon="QuickAppointment.Assets.account_icon.png" Type="account"/>
+                <customcontrol:ActionLabel Text="{Binding RegardingObjectName}" Data="{Binding RegardingObjectId}" Icon="QuickAppointment.Assets.opportunity_icon.png" Type="opportunity"/>
+              </StackLayout>
+              <!-- 訪問先住所 -->
+              <customcontrol:ActionLabel Icon="QuickAppointment.Assets.location_icon.png" Text="{Binding Location}" Type="Address"/>
+              <!-- 詳細 -->
+              <Label Text="{Binding Description}" />
+            </StackLayout>
+            <ScrollView Orientation="Horizontal">
+              <!-- 参加者一覧 -->
+              <customcontrol:AttendeesControl Attendees="{Binding Appointment.Attendees}" SelectedAttendee="{Binding SelectedAttendee, Mode=TwoWay}" />
+            </ScrollView>
+            <!-- 参加者をタップした場合のメニュー -->
+            <customcontrol:AttendeeDetailControl IsVisible="{Binding AttendeeDetailVisible}" Attendee="{Binding SelectedAttendee}" Appointment="{Binding Appointment}"  />
+            <customcontrol:FilesControl Files="{Binding Appointment.Files}"/>
+            <!-- 議事録 -->
+            <Grid IsVisible="{Binding IsMemoVisible}">
+              <StackLayout>
+                <Label Text="議事録"/>
+                <Editor Text="{Binding Appointment.Memo, Mode=TwoWay}" HeightRequest="70" />
+                <Button Text="保存" BackgroundColor="White" TextColor="{StaticResource AccentColor}" Command="{Binding SaveCommand}"/>
+              </StackLayout>
+            </Grid>
+          </StackLayout>
+        </StackLayout>
+      </ScrollView>
+    </ContentPage>
+    
+    <ContentPage Title="今日の予定" Icon="today.png">
+      <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="*"/>
+          <RowDefinition Height="auto"/>
+        </Grid.RowDefinitions>
+        <!-- インジケーター -->
+        <ActivityIndicator IsVisible="{Binding IsLoading}" IsRunning="{Binding IsLoading}" />
+        <!-- 予定一覧 -->
+        <ListView ItemsSource="{Binding Appointments}"
+                HasUnevenRows="True"
+                CachingStrategy="RecycleElement"
+                SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                IsPullToRefreshEnabled="True"
+                RefreshCommand="{Binding GetAppointmentsCommand}"
+                IsRefreshing="{Binding IsLoading, Mode=OneWay}">
+          <ListView.SeparatorColor>
+            <OnPlatform x:TypeArguments="Color" iOS="Transparent"/>
+          </ListView.SeparatorColor>
+          <ListView.ItemTemplate>
+            <DataTemplate>
+              <ViewCell>
+                <StackLayout>
+                  <Label Text="{Binding Subject}" FontSize="22" TextColor="{StaticResource AccentColor}"/>
+                  <customcontrol:StartEndLabel StartTime="{Binding ScheduledStart}" EndTime="{Binding ScheduledEnd}" />
+                  <customcontrol:ActionLabel Icon="QuickAppointment.Assets.location_icon.png" Text="{Binding Location}" Type="Display"/>
+                  <Label Text="{Binding Description}" />
+                </StackLayout>
+              </ViewCell>
+            </DataTemplate>
+          </ListView.ItemTemplate>
+        </ListView>
+        <Button Grid.Row="1" Text="更新" IsVisible="{Binding IsRefreshVisible}" TextColor="{StaticResource AccentColor}" Command="{Binding GetAppointmentsCommand}" />
+      </Grid>
+    </ContentPage>
+  </TabbedPage.Children>
+</TabbedPage>
